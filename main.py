@@ -9,21 +9,22 @@ from flask import (
     render_template,
     session,
     url_for,
-    flash
+    flash,
 )
 import unittest
 from app import create_app
-from app.forms import LoginForm
-from app.firestore_service import get_users,get_todos
+from app.forms import LoginForm, TodoForm
+from app.firestore_service import get_users, get_todos, put_todo
 from flask_login import current_user, login_required
 
 app = create_app()
 
 todos = ["comprar cafe", "solicitud compra", "entregar producto"]
 
+
 @app.cli.command()
 def test():
-    tests=unittest.TestLoader().discover('tests')
+    tests = unittest.TestLoader().discover("tests")
     unittest.TextTestRunner().run(tests)
 
 
@@ -42,19 +43,28 @@ def index():
     return response
 
 
-@app.route("/hello", methods=["GET"])
+@app.route("/hello", methods=["GET", "POST"])
 @login_required
 def hello():
     user_ip = session.get("user_ip")
     login_form = LoginForm()
-    username=current_user.id
+    username = current_user.id
+
+    todo_form = TodoForm()
+
     context = {
         "user_ip": user_ip,
         "todos": get_todos(user_id=username),
         "username": username,
+        "todo_form": todo_form,
     }
-    users=get_users()
-    for user in users:
-        print(user.id)
-        print(user.to_dict()['password'])
+    if todo_form.validate_on_submit():
+        put_todo(user_id=username, description=todo_form.description.data)
+        flash('tu tarea se creo con éxito')
+        return redirect(url_for('hello'))
+
+    # users = get_users()
+    # for user in users:
+    #     print(user.id)
+    #     print(user.to_dict()["password"])
     return render_template("hello.html", **context)
