@@ -33,3 +33,8 @@ def delete_todo(user_id,todo_id):
     todo_ref=db.document('users/{}/todos/{}'.format(user_id,todo_id))
     todo_ref.delete()
     #todo_red=db.collection('users').document(user_id).collection('todos').document(todo_id)
+
+def update_todo(user_id,todo_id,done):
+    todo_done=not bool(done)
+    todo_ref=db.document('users/{}/todos/{}'.format(user_id,todo_id))
+    todo_ref.update({'done': todo_done})
